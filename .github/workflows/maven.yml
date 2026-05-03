@@ -22,6 +22,3 @@ jobs:
 
       - name: Build and Run Tests
         run: mvn -B clean verify
-        env:
-          CALENDAR_ID: "test-calendar-id"
-          HOME_TEAM: "Test Team"
