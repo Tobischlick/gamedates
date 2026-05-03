@@ -1,36 +1,85 @@
-# Welcome to gamedates
+[![Java Version](https://img.shields.io/badge/Java-25-orange)](https://openjdk.org/projects/jdk/25)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/Tobischlick/gamedates)
+![GitHub](https://img.shields.io/github/license/Tobischlick/gamedates)
+![GitHub top language](https://img.shields.io/github/languages/top/Tobischlick/gamedates)
 
-## Config in [application.yml](src/main/resources/application.yml)
+# 🎾 Gamedates
 
-- pages: Link to the leagues (
-  i.e.: https://baden.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=B2+S+2023&group=15)
-    - if there is a '%2F' in the url, you have to fix it to '/'
-- teams-with-index: List all teams with a special index (since some leagues do have two additional fields
-  in their table, 'Spielort', 'Platz')
-- posting-enabled: if set to true, the posting to the google api is enabled (is false by default)
-- home-team: Name (or at least part of the name) of the home team
+## 📖 Introduction
 
-## Config in system environment
+**Gamedates** is an automated tool designed to bridge the gap between
+the [nuLiga (Baden)](https://baden.liga.nu/) tennis portal and your digital calendar.
 
-- The calendar id has to be set as an environment variable, called "CALENDAR_ID"
-- The home team has to be set as an environment variabe, called "HOME_TEAM"
+Manually entering league fixtures for multiple teams into a club calendar is time-consuming and prone to errors. This
+tool solves that by:
 
-## Authentication
+1. **Scraping** live group data directly from nuLiga.
+2. **Filtering** matches based on your specific club name.
+3. **Synchronizing** those matches into a **Google Calendar** with full details (Time, Location, Opponent).
+4. **Updating** existing entries, if a game is rescheduled.
 
-You have to download a credentials.json from google cloud console, therefore you have to be an authorized person.
-Read the documentation by google (https://developers.google.com/calendar/api/quickstart/java) for more informations.
+## ⚙️ Configuration
 
-If there is a problem regarding authentication delete the "tokens" folder and run it again. Refresh token from google
-cloud is only valid for 6 months.
+The application uses a dual-layer configuration strategy: **Static metadata** in a YAML file and **Sensitive secrets**
+via Environment Variables.
 
-## Run
+### 1. Sensitive Data (Environment Variables)
 
-Just run the main method in [FetchGameDates](src/main/java/api/FetchGameDates.java)
+To prevent accidental leaks, the following values must be set in your operating system or CI/CD environment (GitHub
+Actions/GitLab CI):
 
-## General Information
+| Variable      | Description                             | Example                               |
+|:--------------|:----------------------------------------|:--------------------------------------|
+| `CALENDAR_ID` | The unique ID of your Google Calendar.  | `abc...xyz@group.calendar.google.com` |
+| `HOME_TEAM`   | Your club name as it appears on nuLiga. | `My super-awesome club`               |
 
-- Feel free to contact me in case of questions, bug's for ideas for features.
+### 2. League Settings (`application.yml`)
 
-## Open issues
+Located at `src/main/resources/application.yml`. This file defines which leagues to scrape:
 
-See [Issues](https://gitlab.com/Tobischlick/gamedates/-/issues). Feel free to add an issue.
+* **`pages`**: A list of URLs pointing to the nuLiga "Group" or "Table/Fixtures" pages.
+    * *Note: Ensure URLs use `/` instead of `%2F` for proper parsing.*
+* **`teams-with-index`**: A list of specific team names that have extra columns in their nuLiga table (like "Spielort"
+  or "Platz"). This ensures the parser correctly offsets the data.
+* **`posting-enabled`**: Set to `false` for dry runs. Set to `true` to allow the app to write to the Google Calendar
+  API.
+
+### 3. Google API Credentials
+
+The application requires an authorized `credentials.json` file from
+the [Google Cloud Console](https://console.cloud.google.com/):
+
+1. Place the `credentials.json` in `src/main/resources/`.
+2. On first execution, the app will prompt for OAuth2 authorization in your browser.
+3. A `tokens/` directory will be created to store the session.
+
+> ⚠️ **Security Warning:** Never check in your `credentials.json`, `application.yml`, or the `tokens/` folder to a
+> public repository. Ensure they are listed in your `.gitignore`.
+
+## 🚀 How to Run
+
+### Local Execution
+
+Since this project uses **Java 25** and **Lombok**, ensure your environment is set up correctly before starting.
+
+#### 1. Install Dependencies
+
+Ensure you have Maven installed and run:
+
+   ```bash
+   mvn clean install
+   ```
+
+#### 2. Prepare Configuration
+
+Ensure ```src/main/resources/application.yml``` and
+```src/main/resources/credentials.json``` are present
+
+#### 3. Set Up Environment Variables
+
+Set ```CALENDAR_ID``` and ```HOME_TEAM``` in your run config.
+
+#### 4. Launch the tool with 
+```bash
+mvn exec:java -Dexec.mainClass="api.FetchGameDates"
+```
