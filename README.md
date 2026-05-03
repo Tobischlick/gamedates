@@ -73,14 +73,14 @@ Ensure you have Maven installed and run:
 
 #### 2. Prepare Configuration
 
-Ensure ```src/main/resources/application.yml``` and
-```src/main/resources/credentials.json``` are present
+Ensure ```src/main/resources/credentials.json``` is present.
 
 #### 3. Set Up Environment Variables
 
 Set ```CALENDAR_ID``` and ```HOME_TEAM``` in your run config.
 
-#### 4. Launch the tool with 
+#### 4. Launch the tool with
+
 ```bash
 mvn exec:java -Dexec.mainClass="api.FetchGameDates"
 ```
