@@ -1,4 +1,5 @@
 [![Java Version](https://img.shields.io/badge/Java-25-orange)](https://openjdk.org/projects/jdk/25)
+![Tests](https://github.com/Tobischlick/gamedates/actions/workflows/maven.yml/badge.svg)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Tobischlick/gamedates)
 ![GitHub](https://img.shields.io/github/license/Tobischlick/gamedates)
 ![GitHub top language](https://img.shields.io/github/languages/top/Tobischlick/gamedates)
