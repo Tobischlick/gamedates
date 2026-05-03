@@ -1,0 +1,15 @@
+image: maven:4.0.0-rc-5-eclipse-temurin-25
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script:
+    - mvn clean package -DskipTests
+
+test:
+  stage: test
+  script:
+    - mvn test

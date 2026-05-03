@@ -1,0 +1,9 @@
+pages:
+  - https://eine-valide-seite.de/pfad/datei1
+  - https://eine-valide-seite.de/pfad/datei2
+
+posting-enabled: true
+
+teams-with-index:
+  - U18w
+  - Herren (4er)
