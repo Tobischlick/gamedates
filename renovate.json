@@ -11,8 +11,10 @@
       "labels": ["dependencies"]
     },
     {
-      "matchPackagePatterns": ["^org.springframework.boot:"],
-      "groupName": "Spring Boot"
+      "groupName": "Spring Boot",
+      "matchPackageNames": [
+        "/^org.springframework.boot:/"
+      ]
     },
     {
       "matchPackageNames": ["org.projectlombok:lombok"],
@@ -20,8 +22,10 @@
       "extends": ["schedule:monthly"]
     },
     {
-      "matchPackagePatterns": ["google-api"],
-      "groupName": "Google APIs"
+      "groupName": "Google APIs",
+      "matchPackageNames": [
+        "/google-api/"
+      ]
     }
   ]
 }
