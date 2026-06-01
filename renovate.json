@@ -6,9 +6,15 @@
   ],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": false,
-      "labels": ["dependencies"]
+      "labels": [
+        "dependencies"
+      ],
+      "minimumReleaseAge": "3 days"
     },
     {
       "groupName": "Spring Boot",
@@ -17,9 +23,13 @@
       ]
     },
     {
-      "matchPackageNames": ["org.projectlombok:lombok"],
       "groupName": "Lombok",
-      "extends": ["schedule:monthly"]
+      "matchPackageNames": [
+        "org.projectlombok:lombok"
+      ],
+      "extends": [
+        "schedule:monthly"
+      ]
     },
     {
       "groupName": "Google APIs",
