@@ -24,8 +24,14 @@ public class OAuthCalendar {
 
     @ForTestingOnly
     public OAuthCalendar(Calendar service, String calendarId) {
+        this(service, calendarId, false);
+    }
+
+    @ForTestingOnly
+    public OAuthCalendar(Calendar service, String calendarId, boolean postingEnabled) {
         this.service = service;
         this.calendarId = calendarId;
+        this.postingEnabled = postingEnabled;
     }
 
     public OAuthCalendar(String calendarId, boolean postingEnabled) throws GeneralSecurityException, IOException {
@@ -40,45 +46,50 @@ public class OAuthCalendar {
         System.out.printf("Found %s existing events in calendar%n", existingEvens.size());
 
         games.forEach(game -> {
-            // Create a new event
             String clubMatchId = game.clubMatchId();
             Event newEvent = createEvent(game);
-
-            if (!postingEnabled) {
-                System.out.printf("Skipped processing %s: Posting disabled%n", clubMatchId);
-                return;
-            }
+            String eventLabel = clubMatchId + " - " + game.createSummary();
 
             try {
-                // If game already exists in calendar
                 if (existingEvens.containsKey(clubMatchId)) {
                     Event existingEvent = existingEvens.get(clubMatchId);
 
-                    // Compare time
                     if (timeHasChanged(existingEvent, newEvent)) {
-                        String oldTime = existingEvent.getStart().getDateTime().toString();
-                        String newTime = newEvent.getStart().getDateTime().toString();
-                        updateEventTime(existingEvent.getId(), newEvent);
-                        System.out.printf("Updated time for event: %s (%s -> %s)%n",
-                                game.clubMatchId() + " - " + game.createSummary(), oldTime, newTime);
+                        String oldTime = formatEventStartTime(existingEvent);
+                        String newTime = formatEventStartTime(newEvent);
+                        if (postingEnabled) {
+                            updateEventTime(existingEvent.getId(), newEvent);
+                            System.out.printf("Updated time for event: %s (%s -> %s)%n", eventLabel, oldTime, newTime);
+                        } else {
+                            System.out.printf("Would update time for event: %s (%s -> %s)%n", eventLabel, oldTime, newTime);
+                        }
                     } else {
-                        System.out.printf("No changes for event: %s%n", game.clubMatchId() + " - " + game.createSummary());
+                        System.out.printf("No changes for event: %s%n", eventLabel);
                     }
-                } else {
-                    // New game
+                } else if (postingEnabled) {
                     Event createdEvent = service.events().insert(calendarId, newEvent).execute();
-                    System.out.printf("Created new event: %s (%s)%n", game.clubMatchId() + " - " + game.createSummary(), createdEvent.getHtmlLink());
+                    System.out.printf("Created new event: %s (%s)%n", eventLabel, createdEvent.getHtmlLink());
+                } else {
+                    System.out.printf("Would create new event: %s%n", eventLabel);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+
+        if (!postingEnabled) {
+            System.out.println("Posting disabled — no changes were written to the calendar.");
+        }
     }
 
     boolean timeHasChanged(Event existingEvent, Event newEvent) {
         String existingStart = existingEvent.getStart().getDateTime().toString();
         String newStart = newEvent.getStart().getDateTime().toString();
         return !existingStart.equals(newStart);
+    }
+
+    String formatEventStartTime(Event event) {
+        return event.getStart().getDateTime().toString();
     }
 
     private void updateEventTime(String googleEventId, Event newEvent) throws IOException {

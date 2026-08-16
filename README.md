@@ -42,8 +42,8 @@ Located at `src/main/resources/application.yml`. This file defines which leagues
     * *Note: Ensure URLs use `/` instead of `%2F` for proper parsing.*
 * **`teams-with-index`**: A list of specific team names that have extra columns in their nuLiga table (like "Spielort"
   or "Platz"). This ensures the parser correctly offsets the data.
-* **`posting-enabled`**: Set to `false` for dry runs. Set to `true` to allow the app to write to the Google Calendar
-  API.
+* **`posting-enabled`**: Set to `false` for dry runs. The app still compares scraped games against the calendar and
+  prints planned creates and updates, but does not write to Google Calendar. Set to `true` to allow writes.
 
 ### 3. Google API Credentials
 
