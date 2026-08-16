@@ -56,8 +56,11 @@ public class OAuthCalendar {
 
                     // Compare time
                     if (timeHasChanged(existingEvent, newEvent)) {
+                        String oldTime = existingEvent.getStart().getDateTime().toString();
+                        String newTime = newEvent.getStart().getDateTime().toString();
                         updateEventTime(existingEvent.getId(), newEvent);
-                        System.out.printf("Updated time for event: %s%n", game.clubMatchId() + " - " + game.createSummary());
+                        System.out.printf("Updated time for event: %s (%s -> %s)%n",
+                                game.clubMatchId() + " - " + game.createSummary(), oldTime, newTime);
                     } else {
                         System.out.printf("No changes for event: %s%n", game.clubMatchId() + " - " + game.createSummary());
                     }
