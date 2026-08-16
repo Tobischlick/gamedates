@@ -10,13 +10,20 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static utils.TestUtils.*;
 
 
@@ -146,5 +153,51 @@ class OAuthCalendarTest {
         assertThat(result).hasSize(1);
         assertThat(result).containsKey(CLUB_MATCH_ID);
         assertThat(result).doesNotContainValue(event2);
+    }
+
+    @Nested
+    class generateAndPostEvents {
+
+        @Test
+        @DisplayName("logs old and new time when an event's time changes")
+        void logsOldAndNewTimeOnChange() throws Exception {
+            // Posting must be enabled to reach the update branch; the test constructor
+            // doesn't expose it, so we flip it via reflection for this isolated instance.
+            Calendar mockService = Mockito.mock(Calendar.class, Mockito.RETURNS_DEEP_STUBS);
+            OAuthCalendar calendar = new OAuthCalendar(mockService, "myCalendar");
+            Field postingEnabledField = OAuthCalendar.class.getDeclaredField("postingEnabled");
+            postingEnabledField.setAccessible(true);
+            postingEnabledField.set(calendar, true);
+
+            DateTime oldStart = new DateTime("2023-06-18T09:30:00+02:00");
+            Event existingEvent = new Event()
+                    .setId("evt-1")
+                    .setStart(new EventDateTime().setDateTime(oldStart))
+                    .setExtendedProperties(new Event.ExtendedProperties()
+                            .setShared(Map.of(CLUB_MATCH_ID_KEY, CLUB_MATCH_ID)));
+
+            when(mockService.events().list("myCalendar").setSingleEvents(true).execute().getItems())
+                    .thenReturn(List.of(existingEvent));
+            when(mockService.events().patch(eq("myCalendar"), eq("evt-1"), any(Event.class)).execute())
+                    .thenReturn(new Event());
+
+            Game changedGame = buildGame(DATE_B, TIME_B);
+            String expectedOldTime = oldStart.toString();
+            String expectedNewTime = calendar.getDateTime(changedGame, false).toString();
+
+            ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+            PrintStream originalOut = System.out;
+            System.setOut(new PrintStream(capturedOut));
+            try {
+                calendar.generateAndPostEvents(List.of(changedGame));
+            } finally {
+                System.setOut(originalOut);
+            }
+
+            String logOutput = capturedOut.toString();
+            assertThat(logOutput).contains("Updated time for event:");
+            assertThat(logOutput).contains(expectedOldTime);
+            assertThat(logOutput).contains(expectedNewTime);
+        }
     }
 }
