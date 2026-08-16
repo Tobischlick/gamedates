@@ -4,6 +4,7 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
 import model.Game;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -14,15 +15,19 @@ import org.mockito.Mockito;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static utils.TestUtils.*;
 
@@ -157,32 +162,110 @@ class OAuthCalendarTest {
 
     @Nested
     class generateAndPostEvents {
+        private static final String CALENDAR_ID = "myCalender";
+
+        private Calendar mockServiceWithExistingEvents(List<Event> existingEvents) throws IOException {
+            Calendar service = mock(Calendar.class);
+            Calendar.Events events = mock(Calendar.Events.class);
+            Calendar.Events.List listRequest = mock(Calendar.Events.List.class);
+
+            when(service.events()).thenReturn(events);
+            when(events.list(CALENDAR_ID)).thenReturn(listRequest);
+            when(listRequest.setSingleEvents(true)).thenReturn(listRequest);
+            when(listRequest.execute()).thenReturn(new Events().setItems(existingEvents));
+
+            return service;
+        }
+
+        private Event existingEventWithStart(String eventId, String startTimestamp) {
+            return new Event()
+                    .setId(eventId)
+                    .setStart(new EventDateTime().setDateTime(new DateTime(startTimestamp)))
+                    .setExtendedProperties(new Event.ExtendedProperties()
+                            .setShared(Map.of(CLUB_MATCH_ID_KEY, CLUB_MATCH_ID)));
+        }
+
+        @Test
+        @DisplayName("dry run does not write new events")
+        void dryRun_newGame_doesNotInsert() throws IOException {
+            Calendar service = mockServiceWithExistingEvents(List.of());
+            OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, false);
+
+            calendar.generateAndPostEvents(List.of(DEFAULT_GAME));
+
+            verify(service.events(), never()).insert(anyString(), any(Event.class));
+            verify(service.events(), never()).patch(anyString(), anyString(), any(Event.class));
+        }
+
+        @Test
+        @DisplayName("dry run does not update rescheduled events")
+        void dryRun_timeChanged_doesNotPatch() throws IOException {
+            Calendar service = mockServiceWithExistingEvents(List.of(
+                    existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00")
+            ));
+            OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, false);
+
+            calendar.generateAndPostEvents(List.of(buildGame(DATE_B, TIME_B)));
+
+            verify(service.events(), never()).patch(anyString(), anyString(), any(Event.class));
+        }
+
+        @Test
+        @DisplayName("dry run still compares unchanged events")
+        void dryRun_noChanges_doesNotWrite() throws IOException {
+            Calendar service = mockServiceWithExistingEvents(List.of(
+                    existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00")
+            ));
+            OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, false);
+
+            calendar.generateAndPostEvents(List.of(DEFAULT_GAME));
+
+            verify(service.events(), never()).insert(anyString(), any(Event.class));
+            verify(service.events(), never()).patch(anyString(), anyString(), any(Event.class));
+        }
+
+        @Test
+        @DisplayName("posting enabled creates new events")
+        void postingEnabled_newGame_inserts() throws IOException {
+            Calendar service = mockServiceWithExistingEvents(List.of());
+            Calendar.Events.Insert insertRequest = mock(Calendar.Events.Insert.class);
+            when(service.events().insert(eq(CALENDAR_ID), any(Event.class))).thenReturn(insertRequest);
+            when(insertRequest.execute()).thenReturn(new Event().setHtmlLink("http://calendar/link"));
+
+            OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, true);
+            calendar.generateAndPostEvents(List.of(DEFAULT_GAME));
+
+            verify(insertRequest).execute();
+        }
+
+        @Test
+        @DisplayName("posting enabled updates rescheduled events")
+        void postingEnabled_timeChanged_patches() throws IOException {
+            Calendar service = mockServiceWithExistingEvents(List.of(
+                    existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00")
+            ));
+            Calendar.Events.Patch patchRequest = mock(Calendar.Events.Patch.class);
+            when(service.events().patch(eq(CALENDAR_ID), eq("existing-id"), any(Event.class))).thenReturn(patchRequest);
+            when(patchRequest.execute()).thenReturn(new Event());
+
+            OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, true);
+            calendar.generateAndPostEvents(List.of(buildGame(DATE_B, TIME_B)));
+
+            verify(patchRequest).execute();
+        }
 
         @Test
         @DisplayName("logs old and new time when an event's time changes")
-        void logsOldAndNewTimeOnChange() throws Exception {
-            // Posting must be enabled to reach the update branch; the test constructor
-            // doesn't expose it, so we flip it via reflection for this isolated instance.
-            Calendar mockService = Mockito.mock(Calendar.class, Mockito.RETURNS_DEEP_STUBS);
-            OAuthCalendar calendar = new OAuthCalendar(mockService, "myCalendar");
-            Field postingEnabledField = OAuthCalendar.class.getDeclaredField("postingEnabled");
-            postingEnabledField.setAccessible(true);
-            postingEnabledField.set(calendar, true);
+        void logsOldAndNewTimeOnChange() throws IOException {
+            Event existingEvent = existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00");
+            Calendar service = mockServiceWithExistingEvents(List.of(existingEvent));
+            Calendar.Events.Patch patchRequest = mock(Calendar.Events.Patch.class);
+            when(service.events().patch(eq(CALENDAR_ID), eq("existing-id"), any(Event.class))).thenReturn(patchRequest);
+            when(patchRequest.execute()).thenReturn(new Event());
 
-            DateTime oldStart = new DateTime("2023-06-18T09:30:00+02:00");
-            Event existingEvent = new Event()
-                    .setId("evt-1")
-                    .setStart(new EventDateTime().setDateTime(oldStart))
-                    .setExtendedProperties(new Event.ExtendedProperties()
-                            .setShared(Map.of(CLUB_MATCH_ID_KEY, CLUB_MATCH_ID)));
-
-            when(mockService.events().list("myCalendar").setSingleEvents(true).execute().getItems())
-                    .thenReturn(List.of(existingEvent));
-            when(mockService.events().patch(eq("myCalendar"), eq("evt-1"), any(Event.class)).execute())
-                    .thenReturn(new Event());
-
+            OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, true);
             Game changedGame = buildGame(DATE_B, TIME_B);
-            String expectedOldTime = oldStart.toString();
+            String expectedOldTime = existingEvent.getStart().getDateTime().toString();
             String expectedNewTime = calendar.getDateTime(changedGame, false).toString();
 
             ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
