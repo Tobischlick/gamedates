@@ -20,12 +20,16 @@ jobs:
           cache: maven
 
       - name: Restore Google credentials
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > src/main/resources/credentials.json
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: echo "$GOOGLE_CREDENTIALS_JSON" > src/main/resources/credentials.json
 
       - name: Restore OAuth token store
+        env:
+          GOOGLE_TOKEN_STORED_CREDENTIAL_B64: ${{ secrets.GOOGLE_TOKEN_STORED_CREDENTIAL_B64 }}
         run: |
           mkdir -p tokens
-          echo "${{ secrets.GOOGLE_TOKEN_STORED_CREDENTIAL_B64 }}" | base64 -d > tokens/StoredCredential
+          echo "$GOOGLE_TOKEN_STORED_CREDENTIAL_B64" | base64 -d > tokens/StoredCredential
 
       - name: Build
         run: mvn -B clean package -DskipTests
