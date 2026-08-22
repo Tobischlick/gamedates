@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-**Gamedates** is a Java 25/Maven tool that scrapes tennis league fixtures from
+**Gamedates** is a Java 25/Gradle tool that scrapes tennis league fixtures from
 the [nuLiga (Baden)](https://baden.liga.nu/) portal, filters them by club
 name, and syncs them into a Google Calendar (creating new entries and
 updating rescheduled ones). It's a scheduled scrape-and-sync job, not a
@@ -35,15 +35,15 @@ long-running service.
 ## Running things locally
 
 ```bash
-mvn clean install
+./gradlew build
 ```
 
 ```bash
-mvn test
+./gradlew test
 ```
 
 ```bash
-mvn exec:java -Dexec.mainClass="api.FetchGameDates"
+./gradlew run
 ```
 
 Requires `CALENDAR_ID` and `HOME_TEAM` env vars, plus a valid
