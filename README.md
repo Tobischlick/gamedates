@@ -1,5 +1,5 @@
 [![Java Version](https://img.shields.io/badge/Java-25-orange)](https://openjdk.org/projects/jdk/25)
-![Tests](https://github.com/Tobischlick/gamedates/actions/workflows/maven.yml/badge.svg)
+![Tests](https://github.com/Tobischlick/gamedates/actions/workflows/gradle.yml/badge.svg)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Tobischlick/gamedates)
 ![GitHub](https://img.shields.io/github/license/Tobischlick/gamedates)
 ![GitHub top language](https://img.shields.io/github/languages/top/Tobischlick/gamedates)
@@ -71,10 +71,10 @@ Since this project uses **Java 25** and **Lombok**, ensure your environment is s
 
 #### 1. Install Dependencies
 
-Ensure you have Maven installed and run:
+Run the bundled Gradle wrapper (no local Gradle install required):
 
    ```bash
-   mvn clean install
+   ./gradlew build
    ```
 
 #### 2. Prepare Configuration
@@ -88,14 +88,14 @@ Set ```CALENDAR_ID``` and ```HOME_TEAM``` in your run config.
 #### 4. Launch the tool with
 
 ```bash
-mvn exec:java -Dexec.mainClass="api.FetchGameDates"
+./gradlew run
 ```
 
 Or, for a scheduled/unattended run, build the standalone jar once and reuse it:
 
 ```bash
-mvn clean package
-java -jar target/gamedates-1.0.0.jar
+./gradlew shadowJar
+java -jar build/libs/gamedates-1.0.0-all.jar
 ```
 
 ### Running on GitHub Actions
