@@ -37,6 +37,10 @@ public class ConfigReader {
     }
 
     public boolean getPostingEnabled() throws IOException {
+        String postingEnabledFromEnv = System.getenv("POSTING_ENABLED");
+        if (postingEnabledFromEnv != null) {
+            return Boolean.parseBoolean(postingEnabledFromEnv);
+        }
         JsonNode postingEnabledJsonNode = getJsonNode("posting-enabled");
         return postingEnabledJsonNode.asBoolean(false);
     }
