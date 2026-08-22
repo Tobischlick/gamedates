@@ -57,6 +57,12 @@ the [Google Cloud Console](https://console.cloud.google.com/):
 > ⚠️ **Security Warning:** Never check in your `credentials.json`, `application.yml`, or the `tokens/` folder to a
 > public repository. Ensure they are listed in your `.gitignore`.
 
+> ℹ️ **Headless / scheduled execution:** The OAuth flow opens a local browser popup
+> (`LocalServerReceiver` on port 8888), so it cannot complete on a headless server or CI runner.
+> To run this unattended (e.g. via cron), authorize once interactively on a machine with a browser,
+> then copy the resulting `tokens/` directory alongside `credentials.json` to the headless
+> environment before scheduling the job there.
+
 ## 🚀 How to Run
 
 ### Local Execution
@@ -83,4 +89,11 @@ Set ```CALENDAR_ID``` and ```HOME_TEAM``` in your run config.
 
 ```bash
 mvn exec:java -Dexec.mainClass="api.FetchGameDates"
+```
+
+Or, for a scheduled/unattended run, build the standalone jar once and reuse it:
+
+```bash
+mvn clean package
+java -jar target/gamedates-1.0.0.jar
 ```

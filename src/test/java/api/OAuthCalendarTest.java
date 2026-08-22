@@ -59,6 +59,22 @@ class OAuthCalendarTest {
             DateTime expected = new DateTime("2023-06-18T15:30:00+02:00");
             assertThat(oAuthCalendar.getDateTime(DEFAULT_GAME, true)).isEqualTo(expected);
         }
+
+        @Test
+        @DisplayName("getDateTime uses CET (+01:00) offset for games outside daylight-saving time")
+        void winterOffset() {
+            Game winterGame = buildGame("18.12.2023", "09:30");
+            DateTime expected = new DateTime("2023-12-18T09:30:00+01:00");
+            assertThat(oAuthCalendar.getDateTime(winterGame, false)).isEqualTo(expected);
+        }
+
+        @Test
+        @DisplayName("getDateTime rolls over to the next day when the 6-hour end time crosses midnight")
+        void endRollsOverToNextDay() {
+            Game lateGame = buildGame("18.06.2023", "20:00");
+            DateTime expected = new DateTime("2023-06-19T02:00:00+02:00");
+            assertThat(oAuthCalendar.getDateTime(lateGame, true)).isEqualTo(expected);
+        }
     }
 
     @Test
@@ -252,6 +268,26 @@ class OAuthCalendarTest {
             calendar.generateAndPostEvents(List.of(buildGame(DATE_B, TIME_B)));
 
             verify(patchRequest).execute();
+        }
+
+        @Test
+        @DisplayName("continues processing remaining events after one fails to sync")
+        void postingEnabled_oneFails_continuesAndReturnsFailureCount() throws IOException {
+            Calendar service = mockServiceWithExistingEvents(List.of());
+            Calendar.Events.Insert insertRequest = mock(Calendar.Events.Insert.class);
+            when(service.events().insert(eq(CALENDAR_ID), any(Event.class))).thenReturn(insertRequest);
+            when(insertRequest.execute())
+                    .thenThrow(new IOException("quota exceeded"))
+                    .thenReturn(new Event().setHtmlLink("http://calendar/link"));
+
+            OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, true);
+            Game gameA = DEFAULT_GAME;
+            Game gameB = buildGame(DATE_B, TIME_B);
+
+            int failures = calendar.generateAndPostEvents(List.of(gameA, gameB));
+
+            assertThat(failures).isEqualTo(1);
+            verify(insertRequest, Mockito.times(2)).execute();
         }
 
         @Test

@@ -6,6 +6,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
 import java.io.IOException;
@@ -15,10 +17,9 @@ import java.util.Objects;
 
 public class JsoupHelper {
 
-    public JsoupHelper() {
-    }
+    private static final Logger log = LoggerFactory.getLogger(JsoupHelper.class);
 
-    public String getTitle(Document document) {
+    public static String getTitle(Document document) {
         return Objects.requireNonNull(document.body().getElementById("title")).text();
     }
 
@@ -26,7 +27,7 @@ public class JsoupHelper {
      * @param document the page with gamedates of a specific team as document
      * @return a list of table rows of the date table
      */
-    public Elements getTableRows(Document document) {
+    public static Elements getTableRows(Document document) {
         // Get all elements by tag tbody which is a table
         Elements tables = document.body().getElementsByTag("tbody");
         // The second table is the date table
@@ -35,45 +36,42 @@ public class JsoupHelper {
         return dateTable.getElementsByTag("tr");
     }
 
-    public List<Game> createGamesFromTableRows(String team, String title, Elements tableRows, ConfigReader configReader) throws IOException, ConfigurationException {
+    public static List<Game> createGamesFromTableRows(String team, String title, Elements tableRows, ConfigReader configReader) throws IOException, ConfigurationException {
         int index = 0;
         if (configReader.getTeamsWithIndex().stream().anyMatch(teamWithIndex -> teamWithIndex.equals(title))) {
             index = 2;
         }
+        String homeTeamName = configReader.getHomeTeam();
+
         List<Game> games = new ArrayList<>();
         String currentDateTime = null;
-        for (int i = 0; i < tableRows.size(); i++) {
-            if (i == 0) {
-                // First row is header of table in which we are not interested
-                continue;
-            }
-            Elements td = tableRows.get(i).getElementsByTag("td");
-            String dateTime;
-            if (td.get(1).text().isEmpty()) {
-                dateTime = currentDateTime;
-            } else {
-                dateTime = td.get(1).text();
-            }
-            String date = dateTime.split(" ")[0];
-            String time = dateTime.split(" ")[1];
-            currentDateTime = dateTime;
-            String homeTeam = td.get(3 + index).text();
-            String guestTeam = td.get(4 + index).text();
-            if (homeTeam.contains(configReader.getHomeTeam()) || guestTeam.contains(configReader.getHomeTeam())) {
-                String clubMatchId = generateClubMatchId(team, homeTeam, guestTeam);
-                Game game = createGame(clubMatchId, team, homeTeam, guestTeam, date, time, homeTeam.contains(configReader.getHomeTeam()));
-                games.add(game);
+        // First row is the header of the table, in which we are not interested
+        for (int i = 1; i < tableRows.size(); i++) {
+            try {
+                Elements td = tableRows.get(i).getElementsByTag("td");
+                String dateTime = td.get(1).text().isEmpty() ? currentDateTime : td.get(1).text();
+                String date = dateTime.split(" ")[0];
+                String time = dateTime.split(" ")[1];
+                currentDateTime = dateTime;
+                String homeTeam = td.get(3 + index).text();
+                String guestTeam = td.get(4 + index).text();
+                if (homeTeam.contains(homeTeamName) || guestTeam.contains(homeTeamName)) {
+                    String clubMatchId = generateClubMatchId(team, homeTeam, guestTeam);
+                    games.add(createGame(clubMatchId, team, homeTeam, guestTeam, date, time, homeTeam.contains(homeTeamName)));
+                }
+            } catch (RuntimeException e) {
+                log.warn("Skipping unparseable row {} on page '{}': {}", i, title, e.getMessage());
             }
         }
         return games;
     }
 
-    Game createGame(String clubMatchId, String team, String homeTeam, String guestTeam, String date, String time, boolean isHome) {
+    static Game createGame(String clubMatchId, String team, String homeTeam, String guestTeam, String date, String time, boolean isHome) {
         return Game.builder()
                 .clubMatchId(clubMatchId).team(team).homeTeam(homeTeam).guestTeam(guestTeam).date(date).time(time).isHome(isHome).build();
     }
 
-    String generateClubMatchId(String team, String homeTeam, String guestTeam) {
+    static String generateClubMatchId(String team, String homeTeam, String guestTeam) {
         String raw = team + homeTeam + guestTeam;
         String normalized = raw.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
 

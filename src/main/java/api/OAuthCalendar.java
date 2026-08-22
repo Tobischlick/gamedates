@@ -7,14 +7,28 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import model.Game;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import security.CalendarHelper;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class OAuthCalendar {
+
+    private static final Logger log = LoggerFactory.getLogger(OAuthCalendar.class);
+
+    private static final ZoneId GAME_ZONE = ZoneId.of("Europe/Berlin");
+    private static final DateTimeFormatter GAME_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final DateTimeFormatter GAME_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     private final Calendar service;
     private final String calendarId;
@@ -40,46 +54,49 @@ public class OAuthCalendar {
         this.postingEnabled = postingEnabled;
     }
 
-    protected void generateAndPostEvents(List<Game> games) throws IOException {
+    protected int generateAndPostEvents(List<Game> games) throws IOException {
         // Fetch all existing events including their clubMatchId
-        Map<String, Event> existingEvens = getExistingEventsMap();
-        System.out.printf("Found %s existing events in calendar%n", existingEvens.size());
+        Map<String, Event> existingEvents = getExistingEventsMap();
+        log.info("Found {} existing events in calendar", existingEvents.size());
 
-        games.forEach(game -> {
+        int failures = 0;
+        for (Game game : games) {
             String clubMatchId = game.clubMatchId();
             Event newEvent = createEvent(game);
             String eventLabel = clubMatchId + " - " + game.createSummary();
 
             try {
-                if (existingEvens.containsKey(clubMatchId)) {
-                    Event existingEvent = existingEvens.get(clubMatchId);
+                if (existingEvents.containsKey(clubMatchId)) {
+                    Event existingEvent = existingEvents.get(clubMatchId);
 
                     if (timeHasChanged(existingEvent, newEvent)) {
                         String oldTime = formatEventStartTime(existingEvent);
                         String newTime = formatEventStartTime(newEvent);
                         if (postingEnabled) {
                             updateEventTime(existingEvent.getId(), newEvent);
-                            System.out.printf("Updated time for event: %s (%s -> %s)%n", eventLabel, oldTime, newTime);
+                            log.info("Updated time for event: {} ({} -> {})", eventLabel, oldTime, newTime);
                         } else {
-                            System.out.printf("Would update time for event: %s (%s -> %s)%n", eventLabel, oldTime, newTime);
+                            log.info("Would update time for event: {} ({} -> {})", eventLabel, oldTime, newTime);
                         }
                     } else {
-                        System.out.printf("No changes for event: %s%n", eventLabel);
+                        log.info("No changes for event: {}", eventLabel);
                     }
                 } else if (postingEnabled) {
                     Event createdEvent = service.events().insert(calendarId, newEvent).execute();
-                    System.out.printf("Created new event: %s (%s)%n", eventLabel, createdEvent.getHtmlLink());
+                    log.info("Created new event: {} ({})", eventLabel, createdEvent.getHtmlLink());
                 } else {
-                    System.out.printf("Would create new event: %s%n", eventLabel);
+                    log.info("Would create new event: {}", eventLabel);
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                failures++;
+                log.error("Failed to sync event: {} ({})", eventLabel, e.getMessage());
             }
-        });
+        }
 
         if (!postingEnabled) {
-            System.out.println("Posting disabled — no changes were written to the calendar.");
+            log.info("Posting disabled — no changes were written to the calendar.");
         }
+        return failures;
     }
 
     boolean timeHasChanged(Event existingEvent, Event newEvent) {
@@ -138,19 +155,14 @@ public class OAuthCalendar {
     }
 
     DateTime getDateTime(Game game, boolean isEnd) {
-        String[] date = game.date().split("\\.");
-        String[] time = game.time().split(":");
-        // Day pattern: 18.06.2023
-        String day = date[0];
-        String month = date[1];
-        String year = date[2];
-        // Time pattern: 09:30
-        String hour = time[0];
+        LocalDate localDate = LocalDate.parse(game.date(), GAME_DATE_FORMAT);
+        LocalTime localTime = LocalTime.parse(game.time(), GAME_TIME_FORMAT);
+        LocalDateTime localDateTime = LocalDateTime.of(localDate, localTime);
         if (isEnd) {
             // We calculate each game day with 6 hours
-            hour = String.valueOf(Integer.parseInt(hour) + 6);
+            localDateTime = localDateTime.plusHours(6);
         }
-        String minute = time[1];
-        return new DateTime(String.format("%s-%s-%sT%s:%s:00+02:00", year, month, day, hour, minute));
+        ZonedDateTime zonedDateTime = localDateTime.atZone(GAME_ZONE);
+        return new DateTime(zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 }
