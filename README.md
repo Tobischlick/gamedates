@@ -97,3 +97,42 @@ Or, for a scheduled/unattended run, build the standalone jar once and reuse it:
 mvn clean package
 java -jar target/gamedates-1.0.0.jar
 ```
+
+### Running on GitHub Actions
+
+[.github/workflows/daily-sync.yml](.github/workflows/daily-sync.yml) runs the sync once a day
+(`workflow_dispatch` also lets you trigger it manually from the Actions tab). Since the runner is
+headless and stateless, it restores `credentials.json` and an already-authorized `tokens/` store
+from repo secrets on every run instead of doing the interactive OAuth flow.
+
+**Before enabling the schedule:**
+
+1. Make sure the OAuth consent screen for this app is in **Production** status in the
+   [Google Cloud Console](https://console.cloud.google.com/) (APIs & Services → OAuth consent
+   screen), not **Testing**. Refresh tokens for apps left in Testing expire after 7 days, which
+   would silently break the daily run.
+2. Authorize once locally as usual (see above) so `tokens/StoredCredential` exists, then get its
+   base64:
+   ```bash
+   base64 -w0 tokens/StoredCredential
+   ```
+3. Set the following repo secrets (Settings → Secrets and variables → Actions, or via `gh secret set`):
+
+   | Secret                              | Value                                              |
+   |:-------------------------------------|:----------------------------------------------------|
+   | `CALENDAR_ID`                        | Your Google Calendar ID                             |
+   | `HOME_TEAM`                          | Your club name, as in the env var                   |
+   | `GOOGLE_CREDENTIALS_JSON`            | Raw contents of `src/main/resources/credentials.json` |
+   | `GOOGLE_TOKEN_STORED_CREDENTIAL_B64` | Output of the `base64 -w0 tokens/StoredCredential` command above |
+
+   ```bash
+   gh secret set CALENDAR_ID
+   gh secret set HOME_TEAM
+   gh secret set GOOGLE_CREDENTIALS_JSON < src/main/resources/credentials.json
+   base64 -w0 tokens/StoredCredential | gh secret set GOOGLE_TOKEN_STORED_CREDENTIAL_B64
+   ```
+4. Trigger the workflow once manually (Actions tab → Daily Calendar Sync → Run workflow) to
+   confirm it authenticates and runs cleanly before relying on the daily schedule.
+
+The refresh token doesn't need to be rotated on a regular basis — as long as the consent screen
+stays in Production, it keeps working via automatic access-token refresh on each run.
