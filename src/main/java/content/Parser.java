@@ -1,10 +1,9 @@
 package content;
 
+import annotations.ForTestingOnly;
 import utils.StringHelper;
 import config.ConfigReader;
 import model.Game;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
@@ -15,14 +14,20 @@ import java.util.List;
 public class Parser {
 
     private final ConfigReader configReader;
+    private final PageFetcher pageFetcher;
 
     public Parser(ConfigReader configReader) {
+        this(configReader, new JsoupPageFetcher());
+    }
+
+    @ForTestingOnly
+    public Parser(ConfigReader configReader, PageFetcher pageFetcher) {
         this.configReader = configReader;
+        this.pageFetcher = pageFetcher;
     }
 
     public List<Game> getGames(String page) throws IOException, ConfigurationException {
-        Connection connection = Jsoup.connect(page);
-        Document document = connection.get();
+        Document document = pageFetcher.fetch(page);
 
         String title = JsoupHelper.getTitle(document);
         String team = StringHelper.extractTeam(title);
