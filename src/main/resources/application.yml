@@ -1,8 +1,1 @@
-pages:
-  - https://baden.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=B2+M+2026&group=7
-  - https://baden.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=B2+M+2026&group=4
-
-# Some teams have two additional fields (Spielort, Platz) that have to be considered
-teams-with-index: []
-
 posting-enabled: false

@@ -7,8 +7,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import javax.naming.ConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ConfigReader {
 
@@ -20,20 +18,13 @@ public class ConfigReader {
         this.objectMapper = new ObjectMapper(new YAMLFactory());
     }
 
-    public List<String> getPages() throws IOException {
-        JsonNode pagesJsonNode = getJsonNode("pages");
-        List<String> pages = new ArrayList<>();
-        pagesJsonNode.forEach(node -> pages.add(node.textValue()));
-        return pages;
-    }
+    public String getClubId() throws ConfigurationException {
+        String clubIdFromEnv = System.getenv("CLUB_ID");
 
-    public List<String> getTeamsWithIndex() throws IOException {
-        JsonNode teamsWithIndexJsonNode = getJsonNode("teams-with-index");
-        List<String> teamsWithIndex = new ArrayList<>();
-        if (teamsWithIndexJsonNode != null) {
-            teamsWithIndexJsonNode.forEach(node -> teamsWithIndex.add(node.textValue()));
+        if (clubIdFromEnv == null) {
+            throw new ConfigurationException("No club id set");
         }
-        return teamsWithIndex;
+        return clubIdFromEnv;
     }
 
     public boolean getPostingEnabled() throws IOException {

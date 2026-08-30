@@ -2,6 +2,7 @@ package api;
 
 
 import config.ConfigReader;
+import content.DiscoveredPage;
 import content.Parser;
 import model.Game;
 import org.slf4j.Logger;
@@ -22,15 +23,19 @@ public class FetchGameDates {
         ConfigReader configReader = new ConfigReader("src/main/resources/application.yml");
         Parser parser = new Parser(configReader);
 
-        List<String> pages = configReader.getPages();
+        String clubId = configReader.getClubId();
+        List<DiscoveredPage> pages = parser.discoverPages(clubId);
+        if (pages.isEmpty()) {
+            log.warn("No group pages discovered for club {}", clubId);
+        }
         List<Game> games = new ArrayList<>();
         int failedPages = 0;
-        for (String page : pages) {
+        for (DiscoveredPage page : pages) {
             try {
                 games.addAll(parser.getGames(page));
-            } catch (IOException | ConfigurationException e) {
+            } catch (IOException | ConfigurationException | RuntimeException e) {
                 failedPages++;
-                log.error("Failed to fetch/parse page {}: {}", page, e.getMessage());
+                log.error("Failed to fetch/parse page {}: {}", page.url(), e.getMessage());
             }
         }
 
