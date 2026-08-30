@@ -10,14 +10,13 @@ import model.Game;
 
 import javax.naming.ConfigurationException;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 public class FetchGameDates {
 
-    static void main(String[] args) throws GeneralSecurityException, IOException, ConfigurationException {
+    static void main(String[] args) throws IOException, ConfigurationException {
         ConfigReader configReader = new ConfigReader("src/main/resources/application.yml");
         Parser parser = new Parser(configReader);
 

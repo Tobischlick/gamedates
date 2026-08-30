@@ -17,8 +17,7 @@ public class JsoupHelperTest {
     @Test
     void createGame() {
         Game game = JsoupHelper.createGame(CLUB_MATCH_ID, TEAM_A, HOME_TEAM_A, GUEST_TEAM_A, DATE_A, TIME_A, true);
-        Game expected = DEFAULT_GAME;
 
-        assertThat(game).isEqualTo(expected);
+        assertThat(game).isEqualTo(DEFAULT_GAME);
     }
 }

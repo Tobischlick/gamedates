@@ -14,7 +14,6 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 
 import java.io.*;
-import java.security.GeneralSecurityException;
 import java.util.Set;
 
 public class CalendarHelper {
@@ -25,7 +24,7 @@ public class CalendarHelper {
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final Set<String> SCOPES = CalendarScopes.all();
 
-    public Calendar buildService() throws GeneralSecurityException, IOException {
+    public Calendar buildService() throws IOException {
         NetHttpTransport httpTransport = new NetHttpTransport();
         return new com.google.api.services.calendar.Calendar.Builder(httpTransport, JSON_FACTORY, getCredentials(httpTransport))
                 .setApplicationName(APPLICATION_NAME)

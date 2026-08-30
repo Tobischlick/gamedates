@@ -99,10 +99,9 @@ class OAuthCalendarTest {
 
     @Test
     void idDoesNotConsiderDateAndTime() {
-        Game gameA = DEFAULT_GAME;
         Game gameB = buildGame(DATE_B, TIME_B);
 
-        String clubMatchIdA = oAuthCalendar.createEvent(gameA).getExtendedProperties().getShared().get("clubMatchId");
+        String clubMatchIdA = oAuthCalendar.createEvent(DEFAULT_GAME).getExtendedProperties().getShared().get("clubMatchId");
         String clubMatchIdB = oAuthCalendar.createEvent(gameB).getExtendedProperties().getShared().get("clubMatchId");
 
         assertThat(clubMatchIdA).isEqualTo(clubMatchIdB);
@@ -281,10 +280,9 @@ class OAuthCalendarTest {
                     .thenReturn(new Event().setHtmlLink("http://calendar/link"));
 
             OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, true);
-            Game gameA = DEFAULT_GAME;
             Game gameB = buildGame(DATE_B, TIME_B);
 
-            int failures = calendar.generateAndPostEvents(List.of(gameA, gameB));
+            int failures = calendar.generateAndPostEvents(List.of(DEFAULT_GAME, gameB));
 
             assertThat(failures).isEqualTo(1);
             verify(insertRequest, Mockito.times(2)).execute();
