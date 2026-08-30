@@ -14,6 +14,7 @@ import java.util.List;
 public class Parser {
 
     private static final String CLUB_TEAMS_URL = "https://baden.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/clubTeams?club=%s";
+    private static final String CUP_CHAMPIONSHIP = "Pokalwettbewerb";
 
     private final ConfigReader configReader;
     private final PageFetcher pageFetcher;
@@ -28,17 +29,20 @@ public class Parser {
         this.pageFetcher = pageFetcher;
     }
 
-    public List<Game> getGames(String page) throws IOException, ConfigurationException {
-        Document document = pageFetcher.fetch(page);
+    public List<Game> getGames(DiscoveredPage page) throws IOException, ConfigurationException {
+        Document document = pageFetcher.fetch(page.url());
 
         String title = JsoupHelper.getTitle(document);
-        String team = StringHelper.extractTeam(title);
+        // Cup pages don't carry a team name in their own title, so fall back to the label
+        // discovered from the club's team overview page for those, prefixed to distinguish
+        // cup matches from ordinary league games.
+        String team = page.url().contains(CUP_CHAMPIONSHIP) ? "Pokal " + page.team() : StringHelper.extractTeam(title);
         Elements tableRows = JsoupHelper.getTableRows(document);
         return JsoupHelper.createGamesFromTableRows(team, title, tableRows, configReader);
     }
 
-    public List<String> discoverPages(String clubId) throws IOException {
+    public List<DiscoveredPage> discoverPages(String clubId) throws IOException {
         Document document = pageFetcher.fetch(CLUB_TEAMS_URL.formatted(clubId));
-        return JsoupHelper.getGroupPageLinks(document);
+        return JsoupHelper.getDiscoveredPages(document);
     }
 }

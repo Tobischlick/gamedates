@@ -13,47 +13,83 @@ import javax.naming.ConfigurationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class JsoupHelper {
 
     private static final Logger log = LoggerFactory.getLogger(JsoupHelper.class);
-    private static final Set<String> EXTRA_COLUMN_HEADERS = Set.of("Spielort", "Platz");
+    private static final String HOME_TEAM_HEADER = "Heimmannschaft";
+    private static final String BYE = "spielfrei";
 
     public static String getTitle(Document document) {
         return Objects.requireNonNull(document.body().getElementById("title")).text();
     }
 
-    public static List<String> getGroupPageLinks(Document document) {
-        return document.select("a[href*=groupPage]").eachAttr("abs:href");
+    /**
+     * Each row on the club's team overview page carries a team category label (e.g. "Herren 30 1")
+     * in its first cell alongside the groupPage link - used as a fallback team label for cup pages,
+     * whose own title doesn't include one.
+     */
+    public static List<DiscoveredPage> getDiscoveredPages(Document document) {
+        List<DiscoveredPage> pages = new ArrayList<>();
+        for (Element link : document.select("a[href*=groupPage]")) {
+            Element row = link.closest("tr");
+            String team = row == null ? "" : stripSquadNumber(firstCellText(row));
+            pages.add(new DiscoveredPage(team, link.absUrl("href")));
+        }
+        return pages;
+    }
+
+    private static String firstCellText(Element row) {
+        Elements cells = row.getElementsByTag("td");
+        return cells.isEmpty() ? "" : cells.first().text();
+    }
+
+    private static String stripSquadNumber(String text) {
+        return text.replaceAll("\\s+\\d+$", "");
     }
 
     /**
+     * Some groups have extra leading columns (e.g. Spielort/Platz, or Nr. on cup pages) and some
+     * pages have no team-roster table before the fixture table, so neither the number of tables
+     * nor the column layout is fixed. Find the table whose header row contains "Heimmannschaft"
+     * instead of assuming a fixed table/tbody index.
+     *
      * @param document the page with gamedates of a specific team as document
-     * @return a list of table rows of the date table
+     * @return the rows of the fixture table, or an empty list if the page has no such table
      */
     public static Elements getTableRows(Document document) {
-        // Get all elements by tag tbody which is a table
-        Elements tables = document.body().getElementsByTag("tbody");
-        // The second table is the date table
-        Element dateTable = tables.get(1);
-        // Return list (as Elements) of all table rows
-        return dateTable.getElementsByTag("tr");
+        for (Element tbody : document.body().getElementsByTag("tbody")) {
+            Elements rows = tbody.getElementsByTag("tr");
+            if (!rows.isEmpty() && hasHeader(rows.first(), HOME_TEAM_HEADER)) {
+                return rows;
+            }
+        }
+        return new Elements();
+    }
+
+    private static boolean hasHeader(Element row, String headerText) {
+        return row.getElementsByTag("th").stream().anyMatch(th -> th.text().equals(headerText));
     }
 
     /**
-     * Some groups have two extra columns (Spielort, Platz) before the team columns.
-     * Detect them from the header row instead of relying on manual per-team config.
+     * Data rows always carry two more leading columns than the header row (an unlabeled weekday
+     * column and a blank spacer), so the "Heimmannschaft" header's position tells us exactly
+     * where the home-team data column is, regardless of what extra columns precede it.
      */
     static int getColumnOffset(Elements tableRows) {
         Elements headerCells = tableRows.get(0).getElementsByTag("th");
-        return (int) headerCells.stream()
-                .map(Element::text)
-                .filter(EXTRA_COLUMN_HEADERS::contains)
-                .count();
+        for (int i = 0; i < headerCells.size(); i++) {
+            if (headerCells.get(i).text().equals(HOME_TEAM_HEADER)) {
+                return i - 1;
+            }
+        }
+        return 0;
     }
 
     public static List<Game> createGamesFromTableRows(String team, String title, Elements tableRows, ConfigReader configReader) throws ConfigurationException {
+        if (tableRows.isEmpty()) {
+            return new ArrayList<>();
+        }
         int index = getColumnOffset(tableRows);
         String homeTeamName = configReader.getHomeTeam();
 
@@ -69,7 +105,8 @@ public class JsoupHelper {
                 currentDateTime = dateTime;
                 String homeTeam = td.get(3 + index).text();
                 String guestTeam = td.get(4 + index).text();
-                if (homeTeam.contains(homeTeamName) || guestTeam.contains(homeTeamName)) {
+                boolean isBye = homeTeam.equalsIgnoreCase(BYE) || guestTeam.equalsIgnoreCase(BYE);
+                if (!isBye && (homeTeam.contains(homeTeamName) || guestTeam.contains(homeTeamName))) {
                     String clubMatchId = generateClubMatchId(team, homeTeam, guestTeam);
                     games.add(createGame(clubMatchId, team, homeTeam, guestTeam, date, time, homeTeam.contains(homeTeamName)));
                 }
