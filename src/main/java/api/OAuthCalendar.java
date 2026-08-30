@@ -30,7 +30,7 @@ public class OAuthCalendar {
 
     private final Calendar service;
     private final String calendarId;
-    private boolean postingEnabled = false;
+    private boolean postingEnabled;
 
     private static final String CLUB_MATCH_ID_KEY = "clubMatchId";
 

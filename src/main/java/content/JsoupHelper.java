@@ -40,7 +40,7 @@ public class JsoupHelper {
 
     private static String firstCellText(Element row) {
         Elements cells = row.getElementsByTag("td");
-        return cells.isEmpty() ? "" : cells.first().text();
+        return cells.isEmpty() ? "" : cells.getFirst().text();
     }
 
     private static String stripSquadNumber(String text) {
@@ -59,15 +59,15 @@ public class JsoupHelper {
     public static Elements getTableRows(Document document) {
         for (Element tbody : document.body().getElementsByTag("tbody")) {
             Elements rows = tbody.getElementsByTag("tr");
-            if (!rows.isEmpty() && hasHeader(rows.first(), HOME_TEAM_HEADER)) {
+            if (!rows.isEmpty() && hasHeader(rows.getFirst())) {
                 return rows;
             }
         }
         return new Elements();
     }
 
-    private static boolean hasHeader(Element row, String headerText) {
-        return row.getElementsByTag("th").stream().anyMatch(th -> th.text().equals(headerText));
+    private static boolean hasHeader(Element row) {
+        return row.getElementsByTag("th").stream().anyMatch(th -> th.text().equals(HOME_TEAM_HEADER));
     }
 
     /**
@@ -76,7 +76,7 @@ public class JsoupHelper {
      * where the home-team data column is, regardless of what extra columns precede it.
      */
     static int getColumnOffset(Elements tableRows) {
-        Elements headerCells = tableRows.get(0).getElementsByTag("th");
+        Elements headerCells = tableRows.getFirst().getElementsByTag("th");
         for (int i = 0; i < headerCells.size(); i++) {
             if (headerCells.get(i).text().equals(HOME_TEAM_HEADER)) {
                 return i - 1;
@@ -99,6 +99,9 @@ public class JsoupHelper {
             try {
                 Elements td = tableRows.get(i).getElementsByTag("td");
                 String dateTime = td.get(1).text().isEmpty() ? currentDateTime : td.get(1).text();
+                if (dateTime == null) {
+                    throw new IllegalStateException("Row has no date/time and no preceding row to inherit from");
+                }
                 String date = dateTime.split(" ")[0];
                 String time = dateTime.split(" ")[1];
                 currentDateTime = dateTime;

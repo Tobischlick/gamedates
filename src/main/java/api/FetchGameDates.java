@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 public class FetchGameDates {
 
-    public static void main(String[] args) throws GeneralSecurityException, IOException, ConfigurationException {
+    static void main(String[] args) throws GeneralSecurityException, IOException, ConfigurationException {
         ConfigReader configReader = new ConfigReader("src/main/resources/application.yml");
         Parser parser = new Parser(configReader);
 

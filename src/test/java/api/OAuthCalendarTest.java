@@ -193,10 +193,10 @@ class OAuthCalendarTest {
             return service;
         }
 
-        private Event existingEventWithStart(String eventId, String startTimestamp) {
+        private Event existingEventWithStart() {
             return new Event()
-                    .setId(eventId)
-                    .setStart(new EventDateTime().setDateTime(new DateTime(startTimestamp)))
+                    .setId("existing-id")
+                    .setStart(new EventDateTime().setDateTime(new DateTime("2023-06-18T09:30:00+02:00")))
                     .setExtendedProperties(new Event.ExtendedProperties()
                             .setShared(Map.of(CLUB_MATCH_ID_KEY, CLUB_MATCH_ID)));
         }
@@ -217,7 +217,7 @@ class OAuthCalendarTest {
         @DisplayName("dry run does not update rescheduled events")
         void dryRun_timeChanged_doesNotPatch() throws IOException {
             Calendar service = mockServiceWithExistingEvents(List.of(
-                    existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00")
+                    existingEventWithStart()
             ));
             OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, false);
 
@@ -230,7 +230,7 @@ class OAuthCalendarTest {
         @DisplayName("dry run still compares unchanged events")
         void dryRun_noChanges_doesNotWrite() throws IOException {
             Calendar service = mockServiceWithExistingEvents(List.of(
-                    existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00")
+                    existingEventWithStart()
             ));
             OAuthCalendar calendar = new OAuthCalendar(service, CALENDAR_ID, false);
 
@@ -258,7 +258,7 @@ class OAuthCalendarTest {
         @DisplayName("posting enabled updates rescheduled events")
         void postingEnabled_timeChanged_patches() throws IOException {
             Calendar service = mockServiceWithExistingEvents(List.of(
-                    existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00")
+                    existingEventWithStart()
             ));
             Calendar.Events.Patch patchRequest = mock(Calendar.Events.Patch.class);
             when(service.events().patch(eq(CALENDAR_ID), eq("existing-id"), any(Event.class))).thenReturn(patchRequest);
@@ -293,7 +293,7 @@ class OAuthCalendarTest {
         @Test
         @DisplayName("logs old and new time when an event's time changes")
         void logsOldAndNewTimeOnChange() throws IOException {
-            Event existingEvent = existingEventWithStart("existing-id", "2023-06-18T09:30:00+02:00");
+            Event existingEvent = existingEventWithStart();
             Calendar service = mockServiceWithExistingEvents(List.of(existingEvent));
             Calendar.Events.Patch patchRequest = mock(Calendar.Events.Patch.class);
             when(service.events().patch(eq(CALENDAR_ID), eq("existing-id"), any(Event.class))).thenReturn(patchRequest);
