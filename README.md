@@ -29,21 +29,25 @@ via Environment Variables.
 To prevent accidental leaks, the following values must be set in your operating system or CI/CD environment (GitHub
 Actions/GitLab CI):
 
-| Variable      | Description                             | Example                               |
-|:--------------|:----------------------------------------|:--------------------------------------|
-| `CALENDAR_ID` | The unique ID of your Google Calendar.  | `abc...xyz@group.calendar.google.com` |
-| `HOME_TEAM`   | Your club name as it appears on nuLiga. | `My super-awesome club`               |
+| Variable      | Description                                                                        | Example                               |
+|:--------------|:------------------------------------------------------------------------------------|:--------------------------------------|
+| `CALENDAR_ID` | The unique ID of your Google Calendar.                                             | `abc...xyz@group.calendar.google.com` |
+| `HOME_TEAM`   | Your club name as it appears on nuLiga.                                            | `My super-awesome club`               |
+| `CLUB_ID`     | Your club's nuLiga id (the `club=` query parameter on your club's nuLiga pages).    | `33362`                                |
+
+On each run the app fetches this club's team overview page (`clubTeams?club=<CLUB_ID>`) and automatically discovers
+the current `groupPage` fixture-list URL for every league/season the club currently plays in — no more manually
+maintaining a list of league pages across season changes.
 
 ### 2. League Settings (`application.yml`)
 
-Located at `src/main/resources/application.yml`. This file defines which leagues to scrape:
+Located at `src/main/resources/application.yml`. This file defines additional scraping settings:
 
-* **`pages`**: A list of URLs pointing to the nuLiga "Group" or "Table/Fixtures" pages.
-    * *Note: Ensure URLs use `/` instead of `%2F` for proper parsing.*
-* **`teams-with-index`**: A list of specific team names that have extra columns in their nuLiga table (like "Spielort"
-  or "Platz"). This ensures the parser correctly offsets the data.
 * **`posting-enabled`**: Set to `false` for dry runs. The app still compares scraped games against the calendar and
   prints planned creates and updates, but does not write to Google Calendar. Set to `true` to allow writes.
+
+> ℹ️ Some nuLiga groups list an extra "Spielort"/"Platz" pair of columns before the team columns. The parser
+> detects this automatically from each page's table header, so no manual per-team configuration is needed.
 
 ### 3. Google API Credentials
 
@@ -122,12 +126,14 @@ from repo secrets on every run instead of doing the interactive OAuth flow.
    |:-------------------------------------|:----------------------------------------------------|
    | `CALENDAR_ID`                        | Your Google Calendar ID                             |
    | `HOME_TEAM`                          | Your club name, as in the env var                   |
+   | `CLUB_ID`                            | Your club's nuLiga id, as in the env var            |
    | `GOOGLE_CREDENTIALS_JSON`            | Raw contents of `src/main/resources/credentials.json` |
    | `GOOGLE_TOKEN_STORED_CREDENTIAL_B64` | Output of the `base64 -w0 tokens/StoredCredential` command above |
 
    ```bash
    gh secret set CALENDAR_ID
    gh secret set HOME_TEAM
+   gh secret set CLUB_ID
    gh secret set GOOGLE_CREDENTIALS_JSON < src/main/resources/credentials.json
    base64 -w0 tokens/StoredCredential | gh secret set GOOGLE_TOKEN_STORED_CREDENTIAL_B64
    ```

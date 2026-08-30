@@ -18,7 +18,7 @@ long-running service.
 - [src/main/java/api/OAuthCalendar.java](src/main/java/api/OAuthCalendar.java)
   — Google Calendar API wrapper (OAuth2 flow, create/update events).
 - [src/main/java/config/ConfigReader.java](src/main/java/config/ConfigReader.java)
-  — reads `application.yml` plus the `CALENDAR_ID`/`HOME_TEAM` env vars.
+  — reads `application.yml` plus the `CALENDAR_ID`/`HOME_TEAM`/`CLUB_ID` env vars.
 - [src/main/java/content/JsoupHelper.java](src/main/java/content/JsoupHelper.java)
   and [Parser.java](src/main/java/content/Parser.java) — fetch and parse the
   nuLiga HTML tables into `Game` objects.
@@ -27,7 +27,8 @@ long-running service.
 - [src/main/java/security/CalendarHelper.java](src/main/java/security/CalendarHelper.java)
   — calendar credential/token handling.
 - [src/main/resources/application.yml](src/main/resources/application.yml) —
-  `pages`, `teams-with-index`, `posting-enabled` (set `false` for dry runs).
+  `posting-enabled` (set `false` for dry runs). League pages are discovered
+  at runtime from `CLUB_ID` rather than configured here.
 - `src/main/resources/credentials.json` and `tokens/` — gitignored, local
   Google OAuth secrets/session; never commit these.
 - `src/test/java` — JUnit 5 + AssertJ, mirrors the main package structure.
@@ -46,7 +47,7 @@ long-running service.
 ./gradlew run
 ```
 
-Requires `CALENDAR_ID` and `HOME_TEAM` env vars, plus a valid
+Requires `CALENDAR_ID`, `HOME_TEAM`, and `CLUB_ID` env vars, plus a valid
 `src/main/resources/credentials.json` (see [README.md](README.md)).
 
 ## Conventions to preserve
@@ -55,7 +56,7 @@ Requires `CALENDAR_ID` and `HOME_TEAM` env vars, plus a valid
   `application.yml` must still scrape and log planned creates/updates without
   writing to the calendar. Don't regress that when touching the sync logic.
 - **Secrets stay out of git**: `credentials.json`, `tokens/`, and any real
-  `application.yml` values (`CALENDAR_ID`, `HOME_TEAM`) are gitignored/env-only
+  `application.yml` values (`CALENDAR_ID`, `HOME_TEAM`, `CLUB_ID`) are gitignored/env-only
   — never hardcode or commit them.
 - Package-by-layer structure (`api`, `config`, `content`, `model`, `security`,
   `utils`) — put new code in the matching package rather than introducing new

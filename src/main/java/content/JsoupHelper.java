@@ -10,17 +10,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class JsoupHelper {
 
     private static final Logger log = LoggerFactory.getLogger(JsoupHelper.class);
+    private static final Set<String> EXTRA_COLUMN_HEADERS = Set.of("Spielort", "Platz");
 
     public static String getTitle(Document document) {
         return Objects.requireNonNull(document.body().getElementById("title")).text();
+    }
+
+    public static List<String> getGroupPageLinks(Document document) {
+        return document.select("a[href*=groupPage]").eachAttr("abs:href");
     }
 
     /**
@@ -36,11 +41,20 @@ public class JsoupHelper {
         return dateTable.getElementsByTag("tr");
     }
 
-    public static List<Game> createGamesFromTableRows(String team, String title, Elements tableRows, ConfigReader configReader) throws IOException, ConfigurationException {
-        int index = 0;
-        if (configReader.getTeamsWithIndex().stream().anyMatch(teamWithIndex -> teamWithIndex.equals(title))) {
-            index = 2;
-        }
+    /**
+     * Some groups have two extra columns (Spielort, Platz) before the team columns.
+     * Detect them from the header row instead of relying on manual per-team config.
+     */
+    static int getColumnOffset(Elements tableRows) {
+        Elements headerCells = tableRows.get(0).getElementsByTag("th");
+        return (int) headerCells.stream()
+                .map(Element::text)
+                .filter(EXTRA_COLUMN_HEADERS::contains)
+                .count();
+    }
+
+    public static List<Game> createGamesFromTableRows(String team, String title, Elements tableRows, ConfigReader configReader) throws ConfigurationException {
+        int index = getColumnOffset(tableRows);
         String homeTeamName = configReader.getHomeTeam();
 
         List<Game> games = new ArrayList<>();

@@ -22,7 +22,11 @@ public class FetchGameDates {
         ConfigReader configReader = new ConfigReader("src/main/resources/application.yml");
         Parser parser = new Parser(configReader);
 
-        List<String> pages = configReader.getPages();
+        String clubId = configReader.getClubId();
+        List<String> pages = parser.discoverPages(clubId);
+        if (pages.isEmpty()) {
+            log.warn("No group pages discovered for club {}", clubId);
+        }
         List<Game> games = new ArrayList<>();
         int failedPages = 0;
         for (String page : pages) {

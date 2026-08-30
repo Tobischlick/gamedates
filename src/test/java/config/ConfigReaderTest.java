@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.naming.ConfigurationException;
 import java.io.IOException;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -16,20 +15,11 @@ class ConfigReaderTest {
     private static final String TEST_FILE = "application-test.yml";
 
     @Test
-    void getPages_empty() throws IOException {
-        ConfigReader configReader = new ConfigReader(PATH_TO_FILE + EMPTY_FILE);
-        assertThat(configReader.getPages()).isEmpty();
-    }
-
-    @Test
-    void getPages_notEmpty() throws IOException {
-        ConfigReader configReader = new ConfigReader(PATH_TO_FILE + TEST_FILE);
-        List<String> actual = configReader.getPages();
-        List<String> expected = List.of(
-                "https://eine-valide-seite.de/pfad/datei1",
-                "https://eine-valide-seite.de/pfad/datei2"
-        );
-        assertThat(actual).containsExactlyElementsOf(expected);
+    void getClubId_notSet() {
+        ConfigReader configReader = new ConfigReader(getTestFile());
+        assertThatThrownBy(configReader::getClubId)
+                .isInstanceOf(ConfigurationException.class)
+                .hasMessage("No club id set");
     }
 
     @Test
@@ -58,23 +48,6 @@ class ConfigReaderTest {
         assertThatThrownBy(configReader::getHomeTeam)
                 .isInstanceOf(ConfigurationException.class)
                 .hasMessage("No home team set");
-    }
-
-    @Test
-    void getTeamsWithIndex_empty() throws IOException {
-        ConfigReader configReader = new ConfigReader(PATH_TO_FILE + EMPTY_FILE);
-        assertThat(configReader.getTeamsWithIndex()).isEmpty();
-    }
-
-    @Test
-    void getTeamsWithIndex_notEmpty() throws IOException {
-        ConfigReader configReader = new ConfigReader(PATH_TO_FILE + TEST_FILE);
-        List<String> actual = configReader.getTeamsWithIndex();
-        List<String> expected = List.of(
-                "U18w",
-                "Herren (4er)"
-        );
-        assertThat(actual).containsExactlyElementsOf(expected);
     }
 
     private String getEmptyFile() {

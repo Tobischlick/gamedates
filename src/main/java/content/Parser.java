@@ -13,6 +13,8 @@ import java.util.List;
 
 public class Parser {
 
+    private static final String CLUB_TEAMS_URL = "https://baden.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/clubTeams?club=%s";
+
     private final ConfigReader configReader;
     private final PageFetcher pageFetcher;
 
@@ -33,5 +35,10 @@ public class Parser {
         String team = StringHelper.extractTeam(title);
         Elements tableRows = JsoupHelper.getTableRows(document);
         return JsoupHelper.createGamesFromTableRows(team, title, tableRows, configReader);
+    }
+
+    public List<String> discoverPages(String clubId) throws IOException {
+        Document document = pageFetcher.fetch(CLUB_TEAMS_URL.formatted(clubId));
+        return JsoupHelper.getGroupPageLinks(document);
     }
 }

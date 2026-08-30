@@ -38,5 +38,6 @@ jobs:
         env:
           CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
           HOME_TEAM: ${{ secrets.HOME_TEAM }}
+          CLUB_ID: ${{ secrets.CLUB_ID }}
           POSTING_ENABLED: "true"
         run: java -jar build/libs/gamedates-1.0.0-all.jar
