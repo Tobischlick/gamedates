@@ -16,8 +16,7 @@ public class StringHelperTest {
             "Herren 30 1.Oberliga Gr. 001, Herren 30"
     })
     void extractTeam(String input, String expected) {
-        StringHelper stringHelper = new StringHelper();
-        String team = stringHelper.extractTeam(input);
+        String team = StringHelper.extractTeam(input);
 
         assertThat(team).isEqualTo(expected);
     }

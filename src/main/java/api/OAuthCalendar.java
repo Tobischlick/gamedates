@@ -11,7 +11,6 @@ import model.Game;
 import security.CalendarHelper;
 
 import java.io.*;
-import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,7 +29,7 @@ public class OAuthCalendar {
 
     private final Calendar service;
     private final String calendarId;
-    private boolean postingEnabled = false;
+    private final boolean postingEnabled;
 
     private static final String CLUB_MATCH_ID_KEY = "clubMatchId";
 
@@ -46,7 +45,7 @@ public class OAuthCalendar {
         this.postingEnabled = postingEnabled;
     }
 
-    public OAuthCalendar(String calendarId, boolean postingEnabled) throws GeneralSecurityException, IOException {
+    public OAuthCalendar(String calendarId, boolean postingEnabled) throws IOException {
         this.service = new CalendarHelper().buildService();
         this.calendarId = calendarId;
         this.postingEnabled = postingEnabled;

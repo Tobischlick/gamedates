@@ -37,7 +37,7 @@ public class ConfigReader {
             log.debug("posting-enabled resolved to {} (from POSTING_ENABLED env override)", postingEnabled);
             return postingEnabled;
         }
-        JsonNode postingEnabledJsonNode = getJsonNode("posting-enabled");
+        JsonNode postingEnabledJsonNode = getJsonNode();
         boolean postingEnabled = postingEnabledJsonNode.asBoolean(false);
         log.debug("posting-enabled resolved to {} (from application.yml)", postingEnabled);
         return postingEnabled;
@@ -63,7 +63,7 @@ public class ConfigReader {
         return homeTeamFromEnv;
     }
 
-    private JsonNode getJsonNode(String key) throws IOException {
-        return objectMapper.readTree(this.file).get(key);
+    private JsonNode getJsonNode() throws IOException {
+        return objectMapper.readTree(this.file).get("posting-enabled");
     }
 }
