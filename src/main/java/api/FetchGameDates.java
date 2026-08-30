@@ -4,9 +4,8 @@ package api;
 import config.ConfigReader;
 import content.DiscoveredPage;
 import content.Parser;
+import lombok.extern.slf4j.Slf4j;
 import model.Game;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 import javax.naming.ConfigurationException;
@@ -15,9 +14,8 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class FetchGameDates {
-
-    private static final Logger log = LoggerFactory.getLogger(FetchGameDates.class);
 
     public static void main(String[] args) throws GeneralSecurityException, IOException, ConfigurationException {
         ConfigReader configReader = new ConfigReader("src/main/resources/application.yml");

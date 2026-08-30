@@ -1,22 +1,21 @@
 package content;
 
 import config.ConfigReader;
+import lombok.extern.slf4j.Slf4j;
 import model.Game;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 public class JsoupHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(JsoupHelper.class);
     private static final String HOME_TEAM_HEADER = "Heimmannschaft";
     private static final String BYE = "spielfrei";
 

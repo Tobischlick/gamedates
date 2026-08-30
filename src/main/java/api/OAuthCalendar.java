@@ -6,9 +6,8 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import lombok.extern.slf4j.Slf4j;
 import model.Game;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import security.CalendarHelper;
 
 import java.io.*;
@@ -22,9 +21,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class OAuthCalendar {
-
-    private static final Logger log = LoggerFactory.getLogger(OAuthCalendar.class);
 
     private static final ZoneId GAME_ZONE = ZoneId.of("Europe/Berlin");
     private static final DateTimeFormatter GAME_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
