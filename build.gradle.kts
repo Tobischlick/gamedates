@@ -25,7 +25,7 @@ dependencies {
     implementation("org.jsoup:jsoup:1.23.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.22.2")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.2")
-    implementation("com.google.api-client:google-api-client:2.9.0")
+    implementation("com.google.api-client:google-api-client:2.9.1")
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.39.0")
     implementation("com.google.apis:google-api-services-calendar:v3-rev20260708-2.0.0")
     implementation("org.jetbrains:annotations:26.1.0")
