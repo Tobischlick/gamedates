@@ -104,7 +104,7 @@ java -jar build/libs/gamedates-1.0.0-all.jar
 
 ### Running on GitHub Actions
 
-[.github/workflows/daily-sync.yml](.github/workflows/daily-sync.yml) runs the sync once a day
+[.github/workflows/daily-sync.yml](.github/workflows/daily-sync.yml) runs the sync once a week
 (`workflow_dispatch` also lets you trigger it manually from the Actions tab). Since the runner is
 headless and stateless, it restores `credentials.json` and an already-authorized `tokens/` store
 from repo secrets on every run instead of doing the interactive OAuth flow.
@@ -114,7 +114,7 @@ from repo secrets on every run instead of doing the interactive OAuth flow.
 1. Make sure the OAuth consent screen for this app is in **Production** status in the
    [Google Cloud Console](https://console.cloud.google.com/) (APIs & Services → OAuth consent
    screen), not **Testing**. Refresh tokens for apps left in Testing expire after 7 days, which
-   would silently break the daily run.
+   would silently break the scheduled run.
 2. Authorize once locally as usual (see above) so `tokens/StoredCredential` exists, then get its
    base64:
    ```bash
@@ -138,7 +138,7 @@ from repo secrets on every run instead of doing the interactive OAuth flow.
    base64 -w0 tokens/StoredCredential | gh secret set GOOGLE_TOKEN_STORED_CREDENTIAL_B64
    ```
 4. Trigger the workflow once manually (Actions tab → Daily Calendar Sync → Run workflow) to
-   confirm it authenticates and runs cleanly before relying on the daily schedule.
+   confirm it authenticates and runs cleanly before relying on the weekly schedule.
 
 The refresh token doesn't need to be rotated on a regular basis — as long as the consent screen
 stays in Production, it keeps working via automatic access-token refresh on each run.

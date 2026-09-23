@@ -1,8 +1,8 @@
-name: Daily Calendar Sync
+name: Weekly Calendar Sync
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    - cron: '0 5 * * 1'
   workflow_dispatch: {}
 
 jobs:
