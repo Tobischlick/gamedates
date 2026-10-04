@@ -27,7 +27,7 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.3")
     implementation("com.google.api-client:google-api-client:2.9.1")
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.39.0")
-    implementation("com.google.apis:google-api-services-calendar:v3-rev20260708-2.0.0")
+    implementation("com.google.apis:google-api-services-calendar:v3-rev20260925-2.0.0")
     implementation("org.jetbrains:annotations:26.1.0")
     implementation("org.slf4j:slf4j-api:2.0.20")
     implementation("org.slf4j:slf4j-simple:2.0.20")
