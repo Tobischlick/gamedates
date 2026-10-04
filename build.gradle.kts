@@ -32,8 +32,8 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.20")
     implementation("org.slf4j:slf4j-simple:2.0.20")
 
-    compileOnly("org.projectlombok:lombok:1.18.46")
-    annotationProcessor("org.projectlombok:lombok:1.18.46")
+    compileOnly("org.projectlombok:lombok:1.18.48")
+    annotationProcessor("org.projectlombok:lombok:1.18.48")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:6.1.3")
