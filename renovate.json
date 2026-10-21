@@ -4,6 +4,7 @@
     "config:recommended",
     ":timezone(Europe/Berlin)"
   ],
+  "minimumReleaseAge": "3 days",
   "packageRules": [
     {
       "matchUpdateTypes": [
@@ -13,8 +14,7 @@
       "automerge": true,
       "labels": [
         "dependencies"
-      ],
-      "minimumReleaseAge": "3 days"
+      ]
     },
     {
       "groupName": "Spring Boot",
