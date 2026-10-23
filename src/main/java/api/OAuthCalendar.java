@@ -79,8 +79,8 @@ public class OAuthCalendar {
                         log.info("No changes for event: {}", eventLabel);
                     }
                 } else if (postingEnabled) {
-                    Event createdEvent = service.events().insert(calendarId, newEvent).execute();
-                    log.info("Created new event: {} ({})", eventLabel, createdEvent.getHtmlLink());
+                    service.events().insert(calendarId, newEvent).execute();
+                    log.info("Created new event: {}", eventLabel);
                 } else {
                     log.info("Would create new event: {}", eventLabel);
                 }

@@ -1,9 +1,31 @@
-name: Weekly Calendar Sync
+name: Calendar Sync
 
 on:
-  schedule:
-    - cron: '0 5 * * 1'
-  workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      repository:
+        description: 'Repository to check out and build (defaults to the public blueprint repo)'
+        type: string
+        default: 'Tobischlick/gamedates'
+      ref:
+        description: 'Branch, tag, or commit SHA of the repository to build'
+        type: string
+        default: 'main'
+      posting-enabled:
+        description: 'Write changes to the calendar (false = dry run)'
+        type: boolean
+        default: true
+    secrets:
+      GOOGLE_CREDENTIALS_JSON:
+        required: true
+      GOOGLE_TOKEN_STORED_CREDENTIAL_B64:
+        required: true
+      CALENDAR_ID:
+        required: true
+      HOME_TEAM:
+        required: true
+      CLUB_ID:
+        required: true
 
 jobs:
   sync:
@@ -11,6 +33,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.ref }}
 
       - name: Set up JDK 25
         uses: actions/setup-java@v6
@@ -39,5 +64,5 @@ jobs:
           CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
           HOME_TEAM: ${{ secrets.HOME_TEAM }}
           CLUB_ID: ${{ secrets.CLUB_ID }}
-          POSTING_ENABLED: "true"
+          POSTING_ENABLED: ${{ inputs.posting-enabled }}
         run: java -jar build/libs/gamedates-1.0.0-all.jar
