@@ -125,7 +125,7 @@ class ParserTest {
             </html>
             """.formatted(TEAM_A);
 
-    private static final String CLUB_ID = "33362";
+    private static final String CLUB_ID = "12345";
     private static final String CLUB_TEAMS_URL =
             "https://baden.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/clubTeams?club=" + CLUB_ID;
 
