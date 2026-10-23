@@ -104,12 +104,64 @@ java -jar build/libs/gamedates-1.0.0-all.jar
 
 ### Running on GitHub Actions
 
-[.github/workflows/daily-sync.yml](.github/workflows/daily-sync.yml) runs the sync once a week
-(`workflow_dispatch` also lets you trigger it manually from the Actions tab). Since the runner is
-headless and stateless, it restores `credentials.json` and an already-authorized `tokens/` store
-from repo secrets on every run instead of doing the interactive OAuth flow.
+[.github/workflows/sync.yml](.github/workflows/sync.yml) is a **reusable workflow** (`on: workflow_call`) — it
+never runs on a schedule in this repo. Since the runner is headless and stateless, it restores `credentials.json`
+and an already-authorized `tokens/` store from secrets on every run instead of doing the interactive OAuth flow.
 
-**Before enabling the schedule:**
+> ⚠️ **Keep your runs private:** Forks of a public repository are always public, and the Actions logs of a public
+> repository (including your game details and sync timings) are visible to everyone. Don't schedule your personal
+> sync in a public fork — call the reusable workflow from a **private** repository instead.
+
+#### Recommended: a small private caller repo
+
+Create a new **private** repository containing only the secrets listed below and a single workflow file, e.g.
+`.github/workflows/sync.yml`:
+
+```yaml
+name: Weekly Calendar Sync
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch: {}
+jobs:
+  sync:
+    uses: Tobischlick/gamedates/.github/workflows/sync.yml@main
+    secrets: inherit
+```
+
+The reusable workflow checks out and builds this public repo, so the private repo needs no code. Optional inputs
+(set under `with:` next to `uses:`):
+
+| Input             | Default                | Description                                                           |
+|:------------------|:-----------------------|:----------------------------------------------------------------------|
+| `posting-enabled` | `true`                 | Set to `false` for a dry run that only logs planned creates/updates.  |
+| `ref`             | `main`                 | Branch, tag, or commit SHA of the code to build — pin it for stability. |
+| `repository`      | `Tobischlick/gamedates` | Repository to check out and build.                                    |
+
+> ℹ️ To pin the workflow definition itself as well, replace `@main` in the `uses:` line with a tag or commit SHA.
+
+#### Alternative: a private copy via "Use this template"
+
+If you want to modify the code, click **Use this template** on GitHub to create a **private** full copy (unlike a
+fork, it can be private). Inside that copy, add a caller workflow that uses the local reusable workflow and checks
+out your copy instead of this repo:
+
+```yaml
+name: Weekly Calendar Sync
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch: {}
+jobs:
+  sync:
+    uses: ./.github/workflows/sync.yml
+    with:
+      repository: ${{ github.repository }}
+      ref: ${{ github.sha }}
+    secrets: inherit
+```
+
+#### Setting up the secrets
 
 1. Make sure the OAuth consent screen for this app is in **Production** status in the
    [Google Cloud Console](https://console.cloud.google.com/) (APIs & Services → OAuth consent
@@ -120,7 +172,8 @@ from repo secrets on every run instead of doing the interactive OAuth flow.
    ```bash
    base64 -w0 tokens/StoredCredential
    ```
-3. Set the following repo secrets (Settings → Secrets and variables → Actions, or via `gh secret set`):
+3. Set the following secrets in your **private caller repo** (Settings → Secrets and variables → Actions, or via
+   `gh secret set --repo <you>/<private-repo>`):
 
    | Secret                              | Value                                              |
    |:-------------------------------------|:----------------------------------------------------|
@@ -131,13 +184,14 @@ from repo secrets on every run instead of doing the interactive OAuth flow.
    | `GOOGLE_TOKEN_STORED_CREDENTIAL_B64` | Output of the `base64 -w0 tokens/StoredCredential` command above |
 
    ```bash
-   gh secret set CALENDAR_ID
-   gh secret set HOME_TEAM
-   gh secret set CLUB_ID
-   gh secret set GOOGLE_CREDENTIALS_JSON < src/main/resources/credentials.json
-   base64 -w0 tokens/StoredCredential | gh secret set GOOGLE_TOKEN_STORED_CREDENTIAL_B64
+   REPO=<you>/<private-repo>
+   gh secret set CALENDAR_ID --repo "$REPO"
+   gh secret set HOME_TEAM --repo "$REPO"
+   gh secret set CLUB_ID --repo "$REPO"
+   gh secret set GOOGLE_CREDENTIALS_JSON --repo "$REPO" < src/main/resources/credentials.json
+   base64 -w0 tokens/StoredCredential | gh secret set GOOGLE_TOKEN_STORED_CREDENTIAL_B64 --repo "$REPO"
    ```
-4. Trigger the workflow once manually (Actions tab → Daily Calendar Sync → Run workflow) to
+4. Trigger the workflow once manually (Actions tab of your private repo → Weekly Calendar Sync → Run workflow) to
    confirm it authenticates and runs cleanly before relying on the weekly schedule.
 
 The refresh token doesn't need to be rotated on a regular basis — as long as the consent screen
