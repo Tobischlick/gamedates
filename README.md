@@ -125,26 +125,26 @@ on:
   workflow_dispatch: {}
 jobs:
   sync:
-    uses: Tobischlick/gamedates/.github/workflows/sync.yml@main
+    uses: Tobischlick/gamedates/.github/workflows/sync.yml@v4.1.0
     secrets: inherit
 ```
 
-The reusable workflow checks out and builds this public repo, so the private repo needs no code. Optional inputs
-(set under `with:` next to `uses:`):
+The reusable workflow checks out and builds this public repo at exactly the version referenced in `uses:` (here
+the `v4.1.0` release), so the private repo needs no code. Use `@main` instead to always run the latest code. Optional
+inputs (set under `with:` next to `uses:`):
 
-| Input             | Default                | Description                                                           |
-|:------------------|:-----------------------|:----------------------------------------------------------------------|
-| `posting-enabled` | `true`                 | Set to `false` for a dry run that only logs planned creates/updates.  |
-| `ref`             | `main`                 | Branch, tag, or commit SHA of the code to build — pin it for stability. |
-| `repository`      | `Tobischlick/gamedates` | Repository to check out and build.                                    |
+| Input             | Default | Description                                                          |
+|:------------------|:--------|:---------------------------------------------------------------------|
+| `posting-enabled` | `true`  | Set to `false` for a dry run that only logs planned creates/updates. |
 
-> ℹ️ To pin the workflow definition itself as well, replace `@main` in the `uses:` line with a tag or commit SHA.
+> ℹ️ With a release tag in `uses:`, [Renovate](https://docs.renovatebot.com/) (or Dependabot) can open a PR in your
+> private repo whenever a new release is published.
 
 #### Alternative: a private copy via "Use this template"
 
 If you want to modify the code, click **Use this template** on GitHub to create a **private** full copy (unlike a
-fork, it can be private). Inside that copy, add a caller workflow that uses the local reusable workflow and checks
-out your copy instead of this repo:
+fork, it can be private). Inside that copy, add a caller workflow that uses the local reusable workflow (it
+automatically builds your copy):
 
 ```yaml
 name: Weekly Calendar Sync
@@ -155,9 +155,6 @@ on:
 jobs:
   sync:
     uses: ./.github/workflows/sync.yml
-    with:
-      repository: ${{ github.repository }}
-      ref: ${{ github.sha }}
     secrets: inherit
 ```
 

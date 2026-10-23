@@ -3,14 +3,6 @@ name: Calendar Sync
 on:
   workflow_call:
     inputs:
-      repository:
-        description: 'Repository to check out and build (defaults to the public blueprint repo)'
-        type: string
-        default: 'Tobischlick/gamedates'
-      ref:
-        description: 'Branch, tag, or commit SHA of the repository to build'
-        type: string
-        default: 'main'
       posting-enabled:
         description: 'Write changes to the calendar (false = dry run)'
         type: boolean
@@ -34,8 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          repository: ${{ inputs.repository }}
-          ref: ${{ inputs.ref }}
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
 
       - name: Set up JDK 25
         uses: actions/setup-java@v6
