@@ -33,7 +33,7 @@ Actions/GitLab CI):
 |:--------------|:------------------------------------------------------------------------------------|:--------------------------------------|
 | `CALENDAR_ID` | The unique ID of your Google Calendar.                                             | `abc...xyz@group.calendar.google.com` |
 | `HOME_TEAM`   | Your club name as it appears on nuLiga.                                            | `My super-awesome club`               |
-| `CLUB_ID`     | Your club's nuLiga id (the `club=` query parameter on your club's nuLiga pages).    | `33362`                                |
+| `CLUB_ID`     | Your club's nuLiga id (the `club=` query parameter on your club's nuLiga pages).    | `12345`                                |
 
 On each run the app fetches this club's team overview page (`clubTeams?club=<CLUB_ID>`) and automatically discovers
 the current `groupPage` fixture-list URL for every league/season the club currently plays in — no more manually
