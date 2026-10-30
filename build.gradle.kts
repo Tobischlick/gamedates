@@ -21,6 +21,10 @@ repositories {
     mavenCentral()
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 dependencies {
     implementation("org.jsoup:jsoup:1.23.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.22.4")
