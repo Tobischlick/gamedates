@@ -45,6 +45,12 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.24.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    constraints {
+        implementation("com.google.guava:guava:33.7.2-jre") {
+            because("google-http-client pulls in 33.4.8-android, affected by GHSA-xxph-c9ww-hj94")
+        }
+    }
 }
 
 tasks.test {
