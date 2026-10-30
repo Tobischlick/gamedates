@@ -63,6 +63,9 @@ Requires `CALENDAR_ID`, `HOME_TEAM`, and `CLUB_ID` env vars, plus a valid
   top-level packages for small additions.
 - Tests mirror `src/main/java` package-for-package; keep new tests under the
   matching `src/test/java/<package>` path.
+- Dependency locking is on: after adding or changing a dependency in
+  `build.gradle.kts`, run `./gradlew dependencies --write-locks` and commit the
+  updated `gradle.lockfile` (OSV-Scanner reads it to scan transitive deps).
 
 ## Branching & commit conventions
 
